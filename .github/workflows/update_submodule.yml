@@ -1,0 +1,77 @@
+name: Update YOLO Submodule
+
+on:
+  schedule:
+    - cron: '0 0 * * *'  # Runs daily at 00:00
+  workflow_dispatch:
+
+env:
+  SUBMODULE_DIR: './image-processing/yolo'
+
+jobs:
+  check-for-updates:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Check out repository
+      uses: actions/checkout@v2
+      with:
+        submodules: 'recursive'
+
+    - name: Set up Git user
+      run: |
+        git config --global user.name "GitHub Actions Bot"
+        git config --global user.email "actions@users.noreply.github.com"
+
+    - name: Update YOLO submodule
+      run: |
+        cd ${{ env.SUBMODULE_DIR }}
+        git fetch
+        if [ $(git rev-parse HEAD) != $(git rev-parse @{u}) ]; then
+          git pull origin main
+          echo "UPDATED=true" >> $GITHUB_ENV
+        fi
+
+    - name: Save updated state
+      if: env.UPDATED == 'true'
+      run: |
+        echo "UPDATED=true" >> $GITHUB_ENV
+        echo "UPDATED=true" > updated.txt
+    - name: Upload updated state
+      if: env.UPDATED == 'true'
+      uses: actions/upload-artifact@v2
+      with:
+        name: updated
+        path: updated.txt
+
+  create-pull-request:
+    needs: check-for-updates
+    runs-on: ubuntu-latest
+    environment:
+      name: 'pull-request'
+      url: ${{ github.event.pull_request.html_url }}
+
+    steps:
+    - name: Download updated state
+      uses: actions/download-artifact@v2
+      with:
+        name: updated
+    - name: Check if submodule was updated
+      run: |
+        if [ -f "updated.txt" ]; then
+          echo "UPDATED=true" >> $GITHUB_ENV
+        fi
+
+    - name: Check out repository
+      if: env.UPDATED == 'true'
+      uses: actions/checkout@v2
+      with:
+        submodules: 'recursive'
+
+    - name: Create Pull Request
+      if: env.UPDATED == 'true'
+      uses: peter-evans/create-pull-request@v3
+      with:
+        title: "Update YOLO submodule"
+        commit-message: "Update YOLO submodule"
+        branch: update-yolo-submodule
