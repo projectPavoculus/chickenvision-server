@@ -1,0 +1,4 @@
+[submodule "image-processing/yolo"]
+	path = image-processing/yolo
+	url = https://github.com/WongKinYiu/yolov7.git
+	branch = pose
