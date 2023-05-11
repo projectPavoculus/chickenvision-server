@@ -1,6 +1,10 @@
 # 🐔 Chickenvision-Server
 
-This repository contains the source code for the server or cloud service used to process camera images and replace faces with chicken helmets. The repository includes all necessary files, such as Python, Node.js, or Ruby code, as well as any configuration files and dependencies.
+This repository contains the source code for the server or cloud service used to process camera images and replace faces with chicken helmets. The repository includes all necessary files, such as Python, Node.js, or Ruby code, as well as any configuration files and dependencies. 
+
+[YOLOv7 Pose Estimation](https://github.com/WongKinYiu/yolov7/tree/pose) is self-hostable, open-source, and provides remarkable accuracy on various recordings. Here's a quick video example:
+
+📹 [UNIC Graduation / YOLOv7 Pose Estimation Test.mp4](https://user-images.githubusercontent.com/66517969/235775190-1ad800ef-0cfa-45c3-9efd-053d2c361635.mp4)
 
 ## 📦 Setup
 
