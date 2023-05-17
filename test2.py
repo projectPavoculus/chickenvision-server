@@ -1,5 +1,4 @@
 from detectron2.utils.logger import setup_logger
-from detectron2.utils.logger import setup_logger
 from matplotlib.patches import Rectangle
 import matplotlib.gridspec as gridspec
 from mpl_toolkits.axes_grid1 import make_axes_locatable
@@ -9,6 +8,7 @@ setup_logger()
 import numpy as np
 import tqdm
 import cv2
+import torch
 # import some common detectron2 utilities
 from detectron2 import model_zoo
 from detectron2.engine import DefaultPredictor
@@ -24,20 +24,17 @@ width = int(video.get(cv2.CAP_PROP_FRAME_WIDTH))
 height = int(video.get(cv2.CAP_PROP_FRAME_HEIGHT))
 frames_per_second = video.get(cv2.CAP_PROP_FPS)
 num_frames = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
-
-# Initialize video writer
-video_writer = cv2.VideoWriter('out.mp4', fourcc=cv2.VideoWriter_fourcc(*"mp4v"), fps=float(frames_per_second), frameSize=(width, height), isColor=True)
-
-# Initialize predictor
 cfg = get_cfg()
-cfg.merge_from_file(model_zoo.get_config_file("COCO-Keypoints/keypoint_rcnn_R_50_FPN_3x.yaml"))
-cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.9
-cfg.MODEL.WEIGHTS = model_zoo.get_checkpoint_url("COCO-Keypoints/keypoint_rcnn_R_50_FPN_3x.yaml")
+cfg.merge_from_file(model_zoo.get_config_file("COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x.yaml"))
+cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.7  # set threshold for this model
+cfg.MODEL.WEIGHTS = model_zoo.get_checkpoint_url("COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x.yaml")
 cfg.MODEL.DEVICE = "cpu"
 predictor = DefaultPredictor(cfg)
+# Initialize video writer
+video_writer = cv2.VideoWriter('out.mp4', fourcc=cv2.VideoWriter_fourcc(*"mp4v"), fps=float(frames_per_second), frameSize=(width, height), isColor=True)
+from matplotlib.patches import Rectangle
 
-# Initialize visualizer
-v = VideoVisualizer(MetadataCatalog.get(cfg.DATASETS.TRAIN[0]), ColorMode.IMAGE_BW)
+v = VideoVisualizer(MetadataCatalog.get(cfg.DATASETS.TRAIN[0]), ColorMode.IMAGE)
 
 def draw_boxes(frame, predictions):
     # Convert Matplotlib RGB format to OpenCV BGR format
@@ -46,15 +43,11 @@ def draw_boxes(frame, predictions):
     # Get the height and width of the image
     height, width, _ = frame.shape
 
-    # Get the bounding box coordinates and class labels from the predictions
-    prediction_boxes = predictions.pred_boxes.tensor.cpu().numpy()
-    prediction_classes = predictions.pred_classes.cpu().numpy()
-
     # Loop over all predictions in the current frame
-    for i in range(len(prediction_boxes)):
+    for prediction in predictions:
         # Get the predicted class label and the bounding box coordinates
-        class_label = MetadataCatalog.get(cfg.DATASETS.TRAIN[0]).thing_classes[prediction_classes[i]]
-        xmin, ymin, xmax, ymax = prediction_boxes[i]
+        class_label = MetadataCatalog.get(cfg.DATASETS.TRAIN[0]).thing_classes[prediction["pred_classes"][0]]
+        xmin, ymin, xmax, ymax = prediction["pred_boxes"].tensor[0].cpu().numpy()
 
         # Convert the bounding box coordinates to pixel values
         xmin = int(xmin * width)
@@ -71,42 +64,40 @@ def draw_boxes(frame, predictions):
 
     return frame
 
+# Initialize visualizer
+v = VideoVisualizer(MetadataCatalog.get(cfg.DATASETS.TRAIN[0]), ColorMode.IMAGE)
 
-def runOnVideo(video, maxFrames,skipFactor):
+def runOnVideo(video, maxFrames):
     """ Runs the predictor on every frame in the video (unless maxFrames is given),
     and returns the frame with the predictions drawn.
     """
-    readFrames = 0
-    frameCount = 0
+
+    frame_count = 0
     while True:
-        hasFrame, frame = video.read()
-        if not hasFrame:
+        # Read the next frame from the video
+        has_frame, frame = video.read()
+
+        # Exit the loop if we have reached the end of the video
+        if not has_frame:
             break
 
-        # Skip frames if needed
-        if frameCount % skipFactor != 0:
-            frameCount += 1
-            continue
-        
-        # Get prediction results for this frame
+        # Get the predictions for the current frame
         outputs = predictor(frame)
 
-        # Make sure the frame is colored
-        frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+        # Draw the bounding boxes on the current frame
         frame = draw_boxes(frame, outputs["instances"].to("cpu"))
 
-        # Draw a visualization of the predictions using the video visualizer
-        visualization = v.draw_instance_predictions(frame, outputs["instances"].to("cpu"))
+        # Write the current frame to the output video file
+        video_writer.write(frame)
 
-        # Convert Matplotlib RGB format to OpenCV BGR format
-        visualization = cv2.cvtColor(visualization.get_image(), cv2.COLOR_RGB2BGR)
+        # Increment the frame count
+        frame_count += 1
 
-        yield visualization
-
-        readFrames += 1
-        frameCount += 1
-        if readFrames > maxFrames:
+        # Stop processing frames if we have processed the maximum number of frames
+        if frame_count > maxFrames:
             break
+
+# Create a cut-off for debugging
     def count_frames(video_path):
         video = cv2.VideoCapture(video_path)
         total_frames = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
@@ -116,10 +107,10 @@ def runOnVideo(video, maxFrames,skipFactor):
     num_frames = count_frames(video)
 
 # Enumerate the frames of the video
-for visualization in tqdm.tqdm(runOnVideo(video, num_frames,skipFactor=5), total=num_frames):
+for visualization in tqdm.tqdm(runOnVideo(video, num_frames), total=num_frames):
 
     # Write test image
-    cv2.imwrite('POSEdetectron2.png', visualization)
+    cv2.imwrite('POSE detectron2.png', visualization)
 
     # Write to video file
     video_writer.write(visualization)
