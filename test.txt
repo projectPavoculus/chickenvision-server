@@ -1,0 +1,35 @@
+cap = cv2.VideoCapture(videoPath)
+        
+        if(cap.isOpened() == False):
+            print("Error opening file....")
+            return
+        (sucess,image) = cap.read()
+        while sucess:
+            if self.model_type != "PS":
+                predictions = self.predictor(image)
+
+                viz = Visualizer(image[:,:,::-1],metadata = MetadataCatalog.get(self.cfg.DATASETS.TRAIN[0]), instance_mode = ColorMode.IMAGE)
+                output = viz.draw_instance_predictions(predictions["instances"].to("cpu"))
+            else:
+                predictions, segmentInfo = self.predictor(image)["panoptic_seg"]
+                viz = Visualizer(image[:,:,::-1],metadata = MetadataCatalog.get(self.cfg.DATASETS.TRAIN[0]))
+                output = viz.draw_panoptic_seg_predictions(predictions.to("cpu"),segmentInfo)
+
+            cv2.imshow("Results", output.get_image()[:,:,::-1])
+
+            key = cv2.waitKey(1) & 0xFF
+            if key == ord("q"):
+                break
+            (sucess,image) = cap.read()
+
+
+#i have to add a function for video and live streaming
+
+        # the video function create a list of images (frames) and run OnImage one by one, so i havce to make async
+
+        #if you want to make OnVideo Async, then you need to also make OnImage async ...
+
+
+
+        X101-FPN
+        https://github.com/facebookresearch/detectron2/blob/main/configs/COCO-Keypoints/keypoint_rcnn_X_101_32x8d_FPN_3x.yaml
