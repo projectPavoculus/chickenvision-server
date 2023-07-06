@@ -1,0 +1,13 @@
+### Large File Storage ###
+./Yolov8/yolov8n-pose.pt
+./Yolov8/yolov8n-seg.pt
+./Yolov8/yolov8n.pt
+*.csv
+*.mp4
+
+### Python Files ###
+Yolov8/.idea/
+__pycache__/
+
+### VS Code ###
+.vscode/
