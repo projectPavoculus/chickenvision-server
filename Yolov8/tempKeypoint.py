@@ -1,7 +1,7 @@
 import csv
 from ultralytics import YOLO
 from ast import literal_eval
-from utils import loadbar, count_lines
+from utils import loadbar, count_lines, object_size, generate_graph
 
 # Parse keypoints from CSV file
 def parse_keypoints_csv(file_path):
@@ -16,7 +16,7 @@ def parse_keypoints_csv(file_path):
 
             keypoints = []
             for i, row in enumerate(reader):
-                loadbar(i+1, l, prefix='Parse progress:', suffix='Parsing complete', length=50)
+                loadbar(i+1, l, prefix='Parse progress:', suffix=f"{object_size(file)}", length=50)
                 if row:
                     frame = int(row[0])
                     person = int(row[1])
@@ -36,7 +36,7 @@ def save_keypoints(results, output_file):
 
         l = len(results)
         for i, result in enumerate(results):
-            loadbar(i+1, l, prefix='Save progress:', suffix='Save complete', length=50)
+            loadbar(i+1, l, prefix='Save progress:', suffix=f'{object_size(file)}', length=50)
             keypoints = result.keypoints
             for j, person_keypoints in enumerate(keypoints):
                 for k, keypoint in enumerate(person_keypoints):
@@ -55,9 +55,11 @@ def separate_keypoints(keypoints):
     return separated_keypoints
 
 # Display the keypoints
-def display_keypoints(keypoints):
+def display_keypoints(keypoints, save_graph=False):
     for frame_idx, frame_keypoints in keypoints.items():
         print(f"Frame {frame_idx}:")
+        if save_graph:
+            generate_graph(frame_keypoints, frame_idx)
         for person_id, keypoints_list in frame_keypoints.items():
             print(f"Person {person_id}:")
             for keypoint_idx, (keypoint, x, y) in enumerate(keypoints_list):
@@ -71,15 +73,16 @@ model = YOLO("yolov8n-pose.pt")
 source = "bazzar.mp4"
 output_file = "./keypoints_output.csv"
 
-# Save or parse the keypoints to a CSV file
-if input("Save or parse the keypoints? (1/2): ") == 1:
+
+# Save or parse the keypoints to a CSV filex
+if input("\nSave or parse the keypoints? (1/2): ") == "1":
     results = model.predict(source=source, save=False, conf=0.5, save_txt=False, show=True)
     save_keypoints(results, output_file)
 else:
     parsed_results = parse_keypoints_csv(output_file)
 
-if input("Display the keypoints? (y/n): ") == "y":
+if input("\nDisplay the keypoints? (y/n): ") == "y":
     separated_keypoints = separate_keypoints(parsed_results)
-    display_keypoints(separated_keypoints)
+    display_keypoints(separated_keypoints, save_graph=False)
 
 print("Done!")

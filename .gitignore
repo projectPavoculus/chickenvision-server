@@ -1,9 +1,8 @@
 ### Large File Storage ###
-./Yolov8/yolov8n-pose.pt
-./Yolov8/yolov8n-seg.pt
-./Yolov8/yolov8n.pt
+*.pt
 *.csv
 *.mp4
+*.png
 
 ### Python Files ###
 Yolov8/.idea/
