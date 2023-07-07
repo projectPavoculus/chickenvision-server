@@ -41,7 +41,7 @@ def generate_graph(frame_keypoints, frame_idx):
 
         for i, coord in enumerate(keypoints_list):
             plt.annotate(coord[0], (x[i], y[i]))
-        
+
     plt.gca().invert_yaxis()
     
     plt.xlim([0, 1920])
@@ -51,3 +51,12 @@ def generate_graph(frame_keypoints, frame_idx):
     plt.ylabel('Y Coordinate')
 
     plt.savefig(f"./../graphs/frame_{frame_idx}.png")
+
+
+def keypoints_origin(keypoints):
+    """Returns the central point of the first 5 keypoints."""
+    if len(keypoints) < 5:
+        raise Exception("Not enough keypoints to calculate origin.")
+    x = sum([keypoint[1] for keypoint in keypoints[:5]]) / 5
+    y = sum([keypoint[2] for keypoint in keypoints[:5]]) / 5
+    return x, y

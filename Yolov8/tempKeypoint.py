@@ -81,7 +81,7 @@ if input("\nSave or parse the keypoints? (1/2): ") == "1":
 else:
     parsed_results = parse_keypoints_csv(output_file)
 
-if input("\nDisplay the keypoints? (y/n): ") == "y":
+if input("\nDisplay the keypoints? (y/n): ") == "y" and parsed_results:
     separated_keypoints = separate_keypoints(parsed_results)
     display_keypoints(separated_keypoints, save_graph=False)
 
