@@ -65,8 +65,8 @@ def display_keypoints(keypoints, save_graph=False):
             generate_graph(frame_keypoints, frame_idx)
         for person_id, keypoints_list in frame_keypoints.items():
             print(f"Person {person_id}:")
-            for keypoint_idx, (keypoint, x, y) in enumerate(keypoints_list):
-                print(f"Keypoint {keypoint_idx}: (x={x}, y={y})")
+            for keypoint, x, y in keypoints_list[:6]:
+                print(f"Keypoint {keypoint}: (x={x}, y={y})")
             print()
         print()
 

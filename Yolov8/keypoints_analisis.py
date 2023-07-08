@@ -48,26 +48,29 @@ def keypoints_frame(keypoints):
     y = [coord[2] for coord in keypoints]
     return x, y
 
-# Returns the relative helmet origin point
+# Returns the relative direction of the helmet to the Z Axis
 def relative_zaxis(keypoints):
     xl = keypoints[4][1] - keypoints[2][1]
     xr = keypoints[1][1] - keypoints[3][1]
+    threshold = 0.3  # 30% error tolerance
 
-    if xl > xr:
+    if abs(xl - xr) / max(abs(xl), abs(xr)) <= threshold:
+        return "center"
+    elif xl > xr:
         return "left"
-    elif xr > xl:
+    else:
         return "right"
-    else:
-        return "center"
-    
-# Returns the relative helmet origin point
-def relative_xaxis(keypoints):
-    yl = keypoints[4][2] > keypoints[0][2]  # There is an inverse of the Y Axis,
-    yr = keypoints[3][2] > keypoints[0][2]  # in theory it should be 4 > 0 and 3 > 0.
 
-    if yl and yr:
-        return "up"
-    elif not yl and not yr:
-        return "down"
-    else:
+
+# Returns the relative direction of the helmet to the X Axis
+def relative_xaxis(keypoints):
+    y_ears_avg = (keypoints[4][2] + keypoints[3][2]) / 2
+    y_nose = keypoints[0][2]
+    threshold = 0.1  # 10% error tolerance
+
+    if abs(y_nose - y_ears_avg) <= threshold * 100:
         return "center"
+    elif y_nose < y_ears_avg: # Inverse because of inverted Y axis
+        return "up"
+    else:
+        return "down"
