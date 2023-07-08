@@ -1,7 +1,8 @@
 import csv
 from ultralytics import YOLO
 from ast import literal_eval
-from utils import loadbar, count_lines, object_size, generate_graph
+from utils import loadbar, count_lines, object_size
+from keypoints_analisis import generate_graph
 
 # Parse keypoints from CSV file
 def parse_keypoints_csv(file_path):
@@ -16,7 +17,7 @@ def parse_keypoints_csv(file_path):
 
             keypoints = []
             for i, row in enumerate(reader):
-                loadbar(i+1, l, prefix='Parse progress:', suffix=f"{object_size(file)}", length=50)
+                loadbar(i+1, l, prefix='Parse progress:', suffix=f"{object_size(file)}", length=100)
                 if row:
                     frame = int(row[0])
                     person = int(row[1])
@@ -32,11 +33,13 @@ def parse_keypoints_csv(file_path):
 # Save keypoints to CSV file
 def save_keypoints(results, output_file):
     with open(output_file, 'a', newline='') as file:
+        if count_lines(file) > 2:
+            raise Exception("The file already has the necessary.")
         writer = csv.writer(file)
 
         l = len(results)
         for i, result in enumerate(results):
-            loadbar(i+1, l, prefix='Save progress:', suffix=f'{object_size(file)}', length=50)
+            loadbar(i+1, l, prefix='Save progress:', suffix=f'{object_size(file)}', length=100)
             keypoints = result.keypoints
             for j, person_keypoints in enumerate(keypoints):
                 for k, keypoint in enumerate(person_keypoints):
@@ -83,6 +86,6 @@ else:
 
 if input("\nDisplay the keypoints? (y/n): ") == "y" and parsed_results:
     separated_keypoints = separate_keypoints(parsed_results)
-    display_keypoints(separated_keypoints, save_graph=False)
+    display_keypoints(separated_keypoints, save_graph=True)
 
 print("Done!")
