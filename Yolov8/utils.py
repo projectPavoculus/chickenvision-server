@@ -11,8 +11,9 @@ def loadbar(current, total, prefix='', suffix='', decimals=1, length=100, fill='
 
 
 # Counts the number of lines in a file.
-def count_lines(file):
-    return sum(1 for line in file)
+def count_lines(file_path):
+    with open(file_path, 'r') as file:
+        return sum(1 for line in file)
 
 
 # Calculates the size of an object in kilobytes or megabytes.
