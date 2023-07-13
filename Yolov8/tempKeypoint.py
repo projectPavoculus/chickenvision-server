@@ -1,9 +1,9 @@
 import csv
 from tqdm import tqdm
 from ultralytics import YOLO
-from ast import literal_eval
-from utils import loadbar, count_lines, object_size
-from keypoints_analisis import generate_graph, relative_zaxis, relative_xaxis, relative_zaxis_degrees, relative_xaxis_degrees
+from utils import count_lines
+from keypoints_analisis import generate_graph, direction_pitch, direction_yaw
+
 
 # Parse keypoints from CSV file
 def parse_keypoints_csv(file_path):
@@ -23,8 +23,7 @@ def parse_keypoints_csv(file_path):
                     keypoints.append((int(frame), int(person), int(keypoint), float(x), float(y)))
             return keypoints
     except Exception as e:
-        print(f"Error parsing keypoints from CSV file: {e}")
-                
+        print(f"Error parsing keypoints from CSV file: {e}")              
 
 
 # Save keypoints to CSV file
@@ -55,17 +54,17 @@ def separate_keypoints(keypoints):
         separated_keypoints[frame][person].append((keypoint, x, y))
     return separated_keypoints
 
+
 # Display the keypoints
 def display_keypoints(keypoints, save_graph=False):
     for frame_idx, frame_keypoints in keypoints.items():
         print(f"Frame {frame_idx}:")
         if save_graph:
-            generate_graph(frame_keypoints, frame_idx)
+            generate_graph(keypoints, frame_idx)
         for person_id, keypoints_list in frame_keypoints.items():
-            print(f"Person {person_id}: {relative_zaxis(keypoints_list)} / {relative_xaxis(keypoints_list)}")
+            print(f"Person {person_id}: pitch / yaw = {direction_pitch(keypoints_list)} / {direction_yaw(keypoints_list)}")
             for keypoint, x, y in keypoints_list[:6]:
                 print(f"Keypoint {keypoint}: (x={x}, y={y})")
-            print(f"\n Yaw / Pitch: {relative_zaxis_degrees(keypoints_list)} / {relative_xaxis_degrees(keypoints_list)}")
             print()
         print()
 
@@ -86,5 +85,6 @@ else:
 if input("\nDisplay the keypoints? (y/n): ") == "y" and parsed_results:
     separated_keypoints = separate_keypoints(parsed_results)
     display_keypoints(separated_keypoints, save_graph=True)
+
 
 print("Done!")
