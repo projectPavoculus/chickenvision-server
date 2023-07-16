@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
+from tqdm import tqdm
 import numpy as np
-import pandas as pd
+import json
 import math
 
 # List of colors to use for the graph
@@ -51,7 +52,7 @@ def generate_graph(frame_keypoints, frame_idx):
     plt.ylabel('Y Coordinate')
 
     plt.title(f'Frame {frame_idx}')
-    plt.show()
+    plt.savefig(f"./../graphs/frame_{frame_idx}.png")
 
 
 # Function to calculate the size of the head based on the furthest points of the head's center
@@ -206,3 +207,34 @@ def calculate_pitch_rotation(keypoints, version = 0):
         return calculate_pitch_rotation_v3()
     else:
         raise ValueError("Invalid version number. Please select 1, 2, or 3.")
+    
+
+# Function to save the head size, origin point, pitch and yaw rotation of each frame to a json file
+def save_pitch_yaw_headsize_origin(keypoints, output_file):
+    data = {"Frames": []}
+    for frame_idx in tqdm(keypoints.keys(), desc="Saving data"):
+        frame_keypoints = keypoints[frame_idx]
+
+        frame_data = {
+            "FrameID": frame_idx,
+            "Persons": []
+        }
+
+        for person_id, keypoints_list in frame_keypoints.items():
+            pitch = calculate_pitch_rotation(keypoints_list, 1)
+            yaw = calculate_yaw_rotation(keypoints_list)
+            head_size = calculate_size(keypoints_list)
+            origin_point = keypoints_origin(keypoints_list)
+
+            person_data = {
+                "PersonID": person_id,
+                "Pitch": pitch,
+                "Yaw": yaw,
+                "HeadSize": head_size,
+                "OriginPoint": [origin_point[0], origin_point[1]]
+            }
+            frame_data["Persons"].append(person_data)
+        data["Frames"].append(frame_data)
+
+    with open(output_file, 'w') as file:
+        json.dump(data, file, indent=4)

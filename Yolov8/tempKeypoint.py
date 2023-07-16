@@ -2,7 +2,7 @@ import csv
 from tqdm import tqdm
 from ultralytics import YOLO
 from utils import count_lines
-from keypoints_analisis import generate_graph, direction_pitch, direction_yaw
+from keypoints_analisis import generate_graph, direction_pitch, direction_yaw, save_pitch_yaw_headsize_origin
 
 
 # Parse keypoints from CSV file
@@ -85,6 +85,10 @@ else:
 if input("\nDisplay the keypoints? (y/n): ") == "y" and parsed_results:
     separated_keypoints = separate_keypoints(parsed_results)
     display_keypoints(separated_keypoints, save_graph=True)
+
+if input("\nSave rotation keypoints? (y/n): ") == "y" and parsed_results:
+    separated_keypoints = separate_keypoints(parsed_results)
+    save_pitch_yaw_headsize_origin(separated_keypoints, 'pitch_yaw_headsize.json')
 
 
 print("Done!")
