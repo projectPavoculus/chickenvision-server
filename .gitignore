@@ -1,0 +1,12 @@
+### Large File Storage ###
+*.pt
+*.csv
+*.mp4
+*.png
+
+### Python Files ###
+Yolov8/.idea/
+__pycache__/
+
+### VS Code ###
+.vscode/
